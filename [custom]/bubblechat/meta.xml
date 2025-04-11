@@ -1,0 +1,10 @@
+<meta>
+    <info author="Sasuke*" type="script" name="Bubble chat" version="1.2.4" />
+	<oop>true</oop>
+
+	<script src="lib.lua" type="client" />
+	<script src="client.lua" type="client" />
+	<script src="server.lua" type="server" />
+
+	<export function="outputMessage" type="server"/>
+</meta>
