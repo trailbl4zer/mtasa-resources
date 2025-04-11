@@ -1,3 +1,6 @@
+-- Loads newmodels functions, which allow usage of custom model IDs "as if they were normal IDs"
+loadstring(exports.newmodels_azul:import())()
+
 local g_PlayerData = {}
 local g_VehicleData = {}
 local chatTime = {}
@@ -91,7 +94,11 @@ g_OptionDefaults = {
 		maxidletime = 60000,
 		idleexplode = true,
 		maxperplayer = 2,
-		disallowed = {}
+		disallowed = {},
+		disallowed_warp = {}
+	},
+	skins = {
+	disallowed = {},
 	}
 }
 
@@ -159,6 +166,7 @@ local settingsToSend = {
 	"gui/disablewarp",
 	"gui/disableknife",
 	"vehicles/disallowed_warp",
+	"skins/disallowed",
 }
 
 local function updateSettings()

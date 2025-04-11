@@ -24,6 +24,7 @@
 
 	<file src="img/localplayerblip.png" />
 	<file src="img/map.png" />
+	<file src="img/map.jpg" />
 	<file src="img/playerblip.png" />
 
 	<config src="data/animations.xml" type="client" />
@@ -93,11 +94,22 @@
 		<setting name="*vehicles/disallowed" value="[[432]]" />   <!-- Comma-separated list of vehicles that players may not create -->
 
 		<!--
+			Comma-separated list of skins that players may not set.
+			Defaults: Truth
+		-->
+
+		<setting name="*skins/disallowed" value="[[]]" />
+
+		<setting name="*skins/allowedusers" value="[[Azure]]" />
+
+		<!--
 			Comma-separated list of vehicles that players may not teleport with.
 			Defaults: Hunter, Hydra, Rustler, Seasparrow, RC Baron, Rhino
 		-->
 		<setting name="*vehicles/disallowed_warp" value="[[425, 520, 476, 447, 464, 432]]" />
 
+		
+		
 		<setting name="*chat/mainChatDelay" value="1000" />   <!-- Miliseconds between each message a player can send through main chat -->
 		<setting name="*chat/blockRepeatMessages" value="true" />   <!-- Prevent a player from saying the same thing twice in a row to spam -->
 		<setting name="*gui/antiram" value="true" /> <!-- Allow player to use vehicle ghostmode (anti-ram) from F1? -->
@@ -133,4 +145,8 @@
 					desc="How many milliseconds will a global command ban last? (ignoring all calls from a spamming client)"
 					/>
 	</settings>
+
+	<aclrequest>
+        <right name="function.loadstring" access="true"/>
+    </aclrequest>
 </meta>

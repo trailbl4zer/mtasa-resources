@@ -1,4 +1,12 @@
 <catalog type="skin">
+	<group name="Anime">
+		<group name="MiSide">
+			<skin id="-10" name="Cappie" keywords="cool,mita"/>
+		</group>
+		<group name="Honkai: Star Rail">
+			<skin id="-11" name="March 7th - The Hunt 1.0" keywords="march,7th,honkai,star,rail"/>
+		</group>
+	</group>
 	<group name="Special">
 		<skin id="1" name="Truth" keywords="truth,male,white,hippie"/>
 		<skin id="2" name="Maccer" keywords="maccer,male,white,wanker"/>

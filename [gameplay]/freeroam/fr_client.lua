@@ -1,3 +1,6 @@
+-- Loads newmodels functions, which allow usage of custom model IDs "as if they were normal IDs"
+loadstring(exports.newmodels_azul:import())()
+
 local commands = {}
 local customSpawnTable = false
 local allowedStyles =
@@ -134,6 +137,10 @@ local function setElementPosition(element,x,y,z)
 		setTimer(resetKnifing,5000,1)
 	end
 
+	x = tonumber(x)
+	y = tonumber(y)
+	z = tonumber(z)
+	
 	server.setElementPosition(element, x, y, z)
 end
 
@@ -152,7 +159,12 @@ end
 
 function applySkin()
 	local skinID = getControlNumber(wndSkin, 'skinid')
+	
 	if skinID then
+		if table.find(g_settings["skins/disallowed"], skinID) then
+			errMsg("You cannot use /ss with this skin ID!")
+			return
+		end
 		server.setMySkin(skinID)
 		fadeCamera(true)
 	end
@@ -193,6 +205,11 @@ function setSkinCommand(cmd, skin)
 	end
 
 	skin = tonumber(skin)
+
+	if table.find(g_settings["skins/disallowed"], skin) then
+		errMsg("You cannot use /ss with this skin ID!")
+		return
+	end
 
 	if skin and skin == math.floor(skin) then
 		server.setMySkin(skin)
@@ -1114,7 +1131,7 @@ local function retryTeleport(elem,x,y,_,isVehicle,distanceToGround)
 	if hit then
 		local waterZ = getWaterLevel(x, y, 100)
 		z = (waterZ and math.max(groundZ, waterZ) or groundZ) + distanceToGround
-		setElementPosition(elem,x, y, z + distanceToGround)
+		setElementPosition(elem,x, y, z)
 		setCameraPlayerMode()
 		setGravity(grav)
 
@@ -1276,7 +1293,7 @@ wndSetPos = {
 	text = 'Set position',
 	width = g_MapSide + 20,
 	controls = {
-		{'img', id='map', src='img/map.png', width=g_MapSide, height=g_MapSide, onclick=fillInPosition, ondoubleclick=setPosClick, DoubleClickSpamProtected=true},
+		{'img', id='map', src='img/map.jpg', width=g_MapSide, height=g_MapSide, onclick=fillInPosition, ondoubleclick=setPosClick, DoubleClickSpamProtected=true},
 		{'txt', id='x', text='', width=60},
 		{'txt', id='y', text='', width=60},
 		{'txt', id='z', text='', width=60},
@@ -1304,7 +1321,7 @@ function getPosCommand(cmd, playerName)
 			return
 		end
 
-		playerName = getPlayerName(player)		-- make sure case is correct
+		playerName = getPlayerName(player)		-- Make sure case is correct
 		sentenceStart = playerName .. ' is '
 	else
 		player = localPlayer
@@ -1338,37 +1355,79 @@ function setPosCommand(cmd, x, y, z, r)
 	end
 
 	-- Handle setpos if used like: x, y, z, r or x,y,z,r
-	x, y, z, r = string.gsub(x or "", ",", " "), string.gsub(y or "", ",", " "), string.gsub(z or "", ",", " "), string.gsub(r or "", ",", " ")
+	-- Combine all potential inputs into one string, clean it, and split back
+	local raw_input = table.concat({x or "", y or "", z or "", r or ""}, " ")
+	local cleaned_input = raw_input
+	cleaned_input = string.gsub(cleaned_input, "%s*,%s*", ",") -- Remove spaces around commas
+	cleaned_input = string.gsub(cleaned_input, ",", " ")       -- Replace commas with spaces
+	cleaned_input = string.gsub(cleaned_input, "%s+", " ")     -- Collapse multiple spaces to one
+	cleaned_input = string.gsub(cleaned_input, "^%s*(.-)%s*$", "%1") -- Trim leading/trailing spaces
 
-	-- Extra handling for x,y,z,r
-	if (x and y == "" and not tonumber(x)) then
-		x, y, z, r = unpack(split(x, " "))
-	end
+	-- Split the cleaned string and assign back to x, y, z, r
+	-- Assumes 'split' function is available (used later in original code)
+	local parts = split(cleaned_input, " ")
+	x = parts[1] -- Will be nil if input was empty
+	y = parts[2] -- Will be nil if only x was provided
+	z = parts[3] -- Will be nil if only x, y were provided
+	r = parts[4] -- Will be nil if only x, y, z were provided
+	-- Subsequent code handles nil values using (tonumber(var) or default_pos)
 
+	-- The cleaning logic above handles the case previously addressed here, so this block is removed.
+
+	-- Get current position and rotation BEFORE calculating targets
 	local px, py, pz = getElementPosition(localPlayer)
-	local pr = getPedRotation(localPlayer)
+	local pr = getPedRotation(localPlayer) -- Gets Z-axis rotation (yaw)
 
-	-- If somebody doesn't provide all XYZ explain that we will use their current X Y or Z.
-	local message = ""
+	-- Helper function to calculate target coordinate based on input string and current value
+	local function calculateTargetCoordinate(inputStr, currentVal)
+		if not inputStr or inputStr == "" then
+			return currentVal -- No input, use current
+		end
 
-	message = message .. (tonumber(x) and "" or "X ")
-	message = message .. (tonumber(y) and "" or "Y ")
-	message = message .. (tonumber(z) and "" or "Z ")
-
-	if (message ~= "") then
-		outputChatBox(message.."arguments were not provided. Using your current "..message.."values instead.", 255, 255, 0)
+		local sign = string.sub(inputStr, 1, 1)
+		if sign == "+" or sign == "-" then
+			local numStr = string.sub(inputStr, 2)
+			local relativeVal = tonumber(numStr)
+			if relativeVal then
+				return currentVal + (sign == "+" and relativeVal or -relativeVal)
+			else
+				-- Invalid relative value (e.g., "+abc"), use current
+				return currentVal
+			end
+		else
+			-- Not relative, try absolute
+			local absoluteVal = tonumber(inputStr)
+			if absoluteVal then
+				return absoluteVal
+			else
+				-- Invalid absolute value (e.g., "abc"), use current
+				return currentVal
+			end
+		end
 	end
 
-	setPlayerPosition(tonumber(x) or px, tonumber(y) or py, tonumber(z) or pz)
+	-- Calculate final target coordinates using the helper
+	local targetX = calculateTargetCoordinate(x, px)
+	local targetY = calculateTargetCoordinate(y, py)
+	local targetZ = calculateTargetCoordinate(z, pz)
+	local targetR = calculateTargetCoordinate(r, pr)
+
+	-- Apply ground distance adjustment to the target Z coordinate
+	-- This ensures the player's feet are near the ground level at the target Z
+	local distanceToGround = getElementDistanceFromCentreOfMassToBaseOfModel(localPlayer)
+	targetZ = targetZ - distanceToGround
+
+	setPlayerPosition(targetX, targetY, targetZ)
 
 	if (isPedInVehicle(localPlayer)) then
 		local vehicle2 = getPedOccupiedVehicle(localPlayer)
 
 		if (vehicle2 and isElement(vehicle2) and getVehicleController(vehicle2) == localPlayer) then
-			setElementRotation(vehicle2, 0, 0, tonumber(r) or pr)
+			-- Assuming we only want to set the Z-axis rotation (yaw) for vehicles
+			setElementRotation(vehicle2, 0, 0, targetR)
 		end
 	else
-		setPedRotation(localPlayer, tonumber(r) or pr)
+		setPedRotation(localPlayer, targetR)
 	end
 end
 addCommandHandler('setpos', setPosCommand)
@@ -1404,7 +1463,7 @@ wndSpawnMap = {
 	text = 'Select spawn position',
 	width = g_MapSide + 20,
 	controls = {
-		{'img', id='map', src='img/map.png', width=g_MapSide, height=g_MapSide, ondoubleclick=spawnMapDoubleClick},
+		{'img', id='map', src='img/map.jpg', width=g_MapSide, height=g_MapSide, ondoubleclick=spawnMapDoubleClick},
 		{'lbl', text='Welcome to freeroam. Double click a location on the map to spawn.', width=g_MapSide-60, align='center'},
 		{'btn', id='close', closeswindow=true}
 	},
@@ -1416,20 +1475,43 @@ wndSpawnMap = {
 -- Interior window
 ---------------------------
 
-local function setPositionAfterInterior(x,y,z)
-	setPlayerPosition(x,y,z)
-	setCameraTarget(localPlayer)
-	fadeCamera(true)
+local function getCoordinatesAfterInterior(x, y, z, interiorName) -- Added interiorName parameter
+	local curX, curY, curZ = getElementPosition(localPlayer)
+	local message = "Teleported to " .. (interiorName or "Unknown Interior") .. "."
+	message = message .. " You are at {" .. string.format("%.5f", curX) .. ", " .. string.format("%.5f", curY) .. ", " .. string.format("%.5f", curZ) .. "}"
+	outputChatBox(message, 0, 255, 0)
 end
 
-function setPlayerInterior(x,y,z,i)
+local function setPositionAfterInterior(x, y, z, interiorName) -- Added interiorName parameter
+	local distanceToGround = getElementDistanceFromCentreOfMassToBaseOfModel(localPlayer)
+	setPlayerPosition(x,y,z - distanceToGround)
+	setCameraTarget(localPlayer)
+	fadeCamera(true)
+	setGravity(grav)
+	grav = nil
+	setTimer(getCoordinatesAfterInterior, 1000, 1, x, y, z, interiorName) -- Pass interiorName
+end
+
+function setPlayerInterior(x, y, z, i, interiorName) -- Added interiorName parameter
+	if not grav then
+		grav = playerGravity
+		setGravity(0.001)
+	end
 	setCameraMatrix(x,y,z)
 	setCameraInterior(i)
 	server.setElementInterior(localPlayer, i)
-	setTimer(setPositionAfterInterior,1000,1,x,y,z)
+	setTimer(setPositionAfterInterior, 1000, 1, x, y, z, interiorName) -- Pass interiorName
 end
 
 function setInterior(leaf)
+	-- Ensure leaf and leaf.name are valid before proceeding
+	if not leaf or not leaf.name or not leaf.posX or not leaf.posY or not leaf.posZ or not leaf.world then
+		errMsg("Invalid interior data selected.")
+		return
+	end
+
+	local interiorName = leaf.name -- Store the name
+
 	local vehicle = getPedOccupiedVehicle(localPlayer)
 	if vehicle and getVehicleController (vehicle) ~= localPlayer then
 		errMsg("* Only the driver may set interior/dimension")
@@ -1446,19 +1528,20 @@ function setInterior(leaf)
 		end
 	end
 	fadeCamera(false)
-	setTimer(setPlayerInterior,1000,1,leaf.posX, leaf.posY, leaf.posZ, leaf.world)
+	-- Pass the interiorName to the timer
+	setTimer(setPlayerInterior, 1000, 1, leaf.posX, leaf.posY, leaf.posZ, leaf.world, interiorName)
 	closeWindow(wndSetInterior)
 end
 
 wndSetInterior = {
 	'wnd',
 	text = 'Set interior',
-	width = 250,
+	width = 370,
 	controls = {
 		{
 			'lst',
 			id='interiors',
-			width=230,
+			width=350,
 			height=300,
 			columns={
 				{text='Interior', attr='name'}
@@ -2471,3 +2554,190 @@ local function renderKnifingTag()
     end
 end
 addEventHandler ("onClientRender", root, renderKnifingTag)
+
+---------------------------
+-- Interior Cycling Command
+---------------------------
+local g_allInteriorsData = nil -- Will hold the loaded interior data
+local g_currentInteriorCycleIndex = 0 -- Index for cycling
+
+-- Function to load interior data from XML
+local function loadAllInteriorsData()
+	if g_allInteriorsData then return true end -- Already loaded
+
+	local xml = xmlLoadFile("data/interiors.xml")
+	if not xml then
+		outputDebugString("ERROR: Could not load data/interiors.xml", 2)
+		return false
+	end
+
+	g_allInteriorsData = {}
+	local children = xmlNodeGetChildren(xml)
+	if not children then
+		outputDebugString("ERROR: data/interiors.xml has no child nodes.", 2)
+		xmlUnloadFile(xml)
+		return false
+	end
+
+	for i, node in ipairs(children) do
+		if xmlNodeGetName(node) == "interior" then
+			local name = xmlNodeGetAttribute(node, "name")
+			local posX = tonumber(xmlNodeGetAttribute(node, "posX"))
+			local posY = tonumber(xmlNodeGetAttribute(node, "posY"))
+			local posZ = tonumber(xmlNodeGetAttribute(node, "posZ"))
+			local world = tonumber(xmlNodeGetAttribute(node, "world"))
+
+			if name and posX and posY and posZ and world then
+				table.insert(g_allInteriorsData, {
+					name = name,
+					posX = posX,
+					posY = posY,
+					posZ = posZ,
+					world = world
+				})
+			else
+				outputDebugString("Warning: Skipping invalid interior entry in interiors.xml", 1)
+			end
+		end
+	end
+	xmlUnloadFile(xml)
+
+	if #g_allInteriorsData == 0 then
+		outputDebugString("ERROR: No valid interiors found in data/interiors.xml", 2)
+		g_allInteriorsData = nil -- Reset if empty
+		return false
+	end
+
+	outputChatBox("Loaded " .. #g_allInteriorsData .. " interiors for cycling.", 0, 200, 0)
+	return true
+end
+
+-- Command handler function
+function cycleInteriorsCommand()
+	-- Ensure data is loaded
+	if not loadAllInteriorsData() then
+		errMsg("Failed to load interior data. Check debug log.")
+		return
+	end
+
+	-- Increment index (loops back to 1 after the last)
+	g_currentInteriorCycleIndex = g_currentInteriorCycleIndex + 1
+	if g_currentInteriorCycleIndex > #g_allInteriorsData then
+		g_currentInteriorCycleIndex = 1
+	end
+
+	-- Get interior data
+	local interiorData = g_allInteriorsData[g_currentInteriorCycleIndex]
+
+	if not interiorData then
+		errMsg("Error retrieving interior data for index " .. g_currentInteriorCycleIndex)
+		return
+	end
+
+	outputChatBox("Teleporting to interior #" .. g_currentInteriorCycleIndex .. ": " .. interiorData.name, 0, 200, 200)
+
+	-- Trigger the existing teleport sequence directly using setPlayerInterior
+	-- This function expects: x, y, z, interiorID, interiorName
+	setPlayerInterior(interiorData.posX, interiorData.posY, interiorData.posZ, interiorData.world, interiorData.name)
+end
+
+-- Register the command
+addCommandHandler('nextinterior', cycleInteriorsCommand)
+addCommandHandler('ni', cycleInteriorsCommand) -- Optional shorter alias
+
+---------------------------
+-- Automatic Interior Cycling
+---------------------------
+local g_interiorCycleTimer = nil -- Timer handle for the automatic cycle
+local g_autoCycleIndex = 0 -- Index for the automatic cycle
+local g_isAutoCycling = false -- Flag to prevent multiple cycles
+
+local AUTO_CYCLE_DELAY = 5000 -- Delay in ms between teleports (adjust as needed, needs to be > total teleport sequence time)
+
+-- Function called by the timer to process the next interior in the cycle
+local function teleportToNextInteriorInCycle()
+	-- Clear the previous timer handle (it just fired)
+	if isTimer(g_interiorCycleTimer) then
+		-- This check is mostly redundant if called only by the timer, but good practice
+		killTimer(g_interiorCycleTimer)
+	end
+	g_interiorCycleTimer = nil
+
+	-- Increment index for the *next* teleport
+	g_autoCycleIndex = g_autoCycleIndex + 1
+
+	-- Check if we've gone past the end of the list
+	if not g_allInteriorsData or g_autoCycleIndex > #g_allInteriorsData then
+		outputChatBox("Interior cycling complete.", 0, 255, 0)
+		g_isAutoCycling = false
+		g_autoCycleIndex = 0 -- Reset index
+		return -- Stop the cycle
+	end
+
+	-- Get interior data for the current index
+	local interiorData = g_allInteriorsData[g_autoCycleIndex]
+
+	if not interiorData then
+		errMsg("Error retrieving interior data for index " .. g_autoCycleIndex .. " during auto-cycle.")
+		g_isAutoCycling = false -- Stop cycle on error
+		g_autoCycleIndex = 0
+		return
+	end
+
+	outputChatBox("Auto-cycling to interior #" .. g_autoCycleIndex .. "/" .. #g_allInteriorsData .. ": " .. interiorData.name, 0, 200, 200)
+
+	-- Trigger the existing teleport sequence using the specific interior data
+	-- setPlayerInterior expects: x, y, z, interiorID, interiorName
+	setPlayerInterior(interiorData.posX, interiorData.posY, interiorData.posZ, interiorData.world, interiorData.name)
+
+	-- Set the timer for the *next* interior after the delay
+	g_interiorCycleTimer = setTimer(teleportToNextInteriorInCycle, AUTO_CYCLE_DELAY, 1)
+end
+
+-- Command handler to start the automatic cycle
+function startInteriorCycleCommand()
+	if g_isAutoCycling then
+		errMsg("An interior cycle is already in progress. Use /stopcycle first.")
+		return
+	end
+
+	-- Ensure data is loaded
+	if not loadAllInteriorsData() then
+		errMsg("Failed to load interior data. Check debug log.")
+		return
+	end
+
+	if #g_allInteriorsData == 0 then
+		errMsg("No interiors loaded to cycle through.")
+		return
+	end
+
+	outputChatBox("Starting automatic interior cycle (" .. #g_allInteriorsData .. " interiors, " .. (AUTO_CYCLE_DELAY/1000) .. "s delay)...", 0, 200, 0)
+	g_isAutoCycling = true
+	g_autoCycleIndex = 0 -- Start from the beginning (will be incremented to 1 by the first call)
+
+	-- Start the first step of the cycle immediately
+	teleportToNextInteriorInCycle()
+end
+
+-- Command handler to stop the automatic cycle manually
+function stopInteriorCycleCommand()
+	if not g_isAutoCycling then
+		outputChatBox("No interior cycle is currently running.", 255, 150, 0)
+		return
+	end
+
+	if isTimer(g_interiorCycleTimer) then
+		killTimer(g_interiorCycleTimer)
+		g_interiorCycleTimer = nil
+	end
+
+	g_isAutoCycling = false
+	g_autoCycleIndex = 0
+	outputChatBox("Automatic interior cycle stopped.", 255, 150, 0)
+end
+
+-- Register the new commands
+addCommandHandler('cycleallinteriors', startInteriorCycleCommand)
+addCommandHandler('cai', startInteriorCycleCommand) -- Optional alias
+addCommandHandler('stopcycle', stopInteriorCycleCommand)
