@@ -14,7 +14,7 @@
 	<interior name="Ammu-Nation 4" posX="317.2380" posY="-168.0520" posZ="999.5930" world="6"/>
 	<interior name="Ammu-Nation 5 (2 Floors)" posX="315.3850" posY="-142.2420" posZ="999.6010" world="7"/>
 	<interior name="Andromada Cargo hold" posX="315.48" posY="984.13" posZ="1959.11" world="9"/>
-	<interior name="Angel Pine Trailer" posX="0.3440" posY="-0.5140" posZ="1000.5490" world="2"/>
+	<interior name="Angel Pine Trailer" posX="0.3440" posY="-0.5140" posZ="999.4284" world="2"/>
 	<interior name="Atrium" posX="1726.1370" posY="-1645.2300" posZ="20.2260" world="18"/>
 	<interior name="BDups Apartment" posX="1527.38" posY="-11.02" posZ="1002.10" world="3"/>
 	<interior name="BDups Crack Palace" posX="1523.7510" posY="-46.0458" posZ="1002.1310" world="2"/>
@@ -108,6 +108,14 @@
 	<interior name="Rusty Brown's - Ring Donuts" posX="377.0030" posY="-192.5070" posZ="1000.6330" world="17"/>
 	<interior name="Ryder's House" posX="2464.2110" posY="-1697.9520" posZ="1013.5080" world="2"/>
 	<interior name="SFPD HQ" posX="246.4410" posY="112.1640" posZ="1003.2190" world="10"/>
+	<interior name="Safe House 1" posX="2262.83" posY="-1137.71" posZ="1050.63" world="10"/>
+	<interior name="Safe house 2" posX="2365.2383" posY="-1134.2969" posZ="1050.875" world="8"/>
+	<interior name="Safe House 3" posX="2333.0330" posY="-1073.9600" posZ="1049.0230" world="6"/>
+	<interior name="Safe House 4" posX="2216.5400" posY="-1076.2900" posZ="1050.4840" world="1"/>
+	<interior name="Safe House 5" posX="2194.2910" posY="-1204.0150" posZ="1049.0230" world="6"/>
+	<interior name="Safe House 6" posX="2308.8710" posY="-1210.7170" posZ="1049.0230" world="6"/>
+	<interior name="Safe house 7" posX="2324.3848" posY="-1148.4805" posZ="1050.7101" world="12"/>
+	<interior name="Safe House 17" posX="2237.5900" posY="-1080.8699" posZ="1049.0234" world="2"/>
 	<interior name="San Fierro Chunk (cutscene place)" posX="-2015.6600" posY="148.2000" posZ="29.31" world="14"/>
 	<interior name="Sex Shop" posX="-106.7268" posY="-19.6444" posZ="1000.7190" world="3"/>
 	<interior name="Shamal cabin" posX="1.6127" posY="34.7411" posZ="1199.0" world="1"/>
@@ -134,12 +142,4 @@
 	<interior name="Wheel Arch Angels" posX="614.3889" posY="-124.0991" posZ="997.9950" world="3"/>
 	<interior name="Wu Zi Mu's Betting place" posX="-2159.9260" posY="641.4587" posZ="1052.3820" world="1"/>
 	<interior name="Zip" posX="161.4620" posY="-91.3940" posZ="1001.8050" world="18"/>
-	<interior name="Safe House 1" posX="2262.83" posY="-1137.71" posZ="1050.63" world="10"/>
-	<interior name="Safe house 2" posX="2365.2383" posY="-1134.2969" posZ="1050.875" world="8"/>
-	<interior name="Safe House 3" posX="2333.0330" posY="-1073.9600" posZ="1049.0230" world="6"/>
-	<interior name="Safe House 4" posX="2216.5400" posY="-1076.2900" posZ="1050.4840" world="1"/>
-	<interior name="Safe House 5" posX="2194.2910" posY="-1204.0150" posZ="1049.0230" world="6"/>
-	<interior name="Safe House 6" posX="2308.8710" posY="-1210.7170" posZ="1049.0230" world="6"/>
-	<interior name="Safe house 7" posX="2324.3848" posY="-1148.4805" posZ="1050.7101" world="12"/>
-	<interior name="Safe House 17" posX="2237.5900" posY="-1080.8699" posZ="1049.0234" world="2"/>
 </catalog>
