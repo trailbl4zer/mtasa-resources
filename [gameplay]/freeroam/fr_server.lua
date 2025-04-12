@@ -430,6 +430,12 @@ end
 
 local _setPlayerGravity = setPedGravity
 function setPedGravity(player, grav)
+	-- Check if player is wearing a jetpack
+	if isPedWearingJetpack(player) then
+		errMsg("You cannot change gravity while wearing a jetpack.", player)
+		return
+	end
+
 	if grav < getOption('gravity.min') then
 		errMsg(('Minimum allowed gravity is %.5f'):format(getOption('gravity.min')), player)
 	elseif grav > getOption('gravity.max') then
