@@ -1,0 +1,10 @@
+<meta>
+    <info name="Stream Memory Size Selector Menu" author="Ciel" version="1.0" description="A menu to select the stream memory size for the game." />
+
+    <script src="stream_client.lua" type="client" cache="false" />
+    <script src="cache_client.lua" type="client" cache="false" />
+    <script src="fpslimiter_client.lua" type="client" cache="false" />
+    <script src="server.lua" type="server" />
+    <script src="shared.lua" type="shared" cache="false" />
+    <script src="utils.lua" type="shared" cache="false" />
+</meta>5
